@@ -1,0 +1,249 @@
+Na:Prettl_Delphi
+Tx:;Auftragsnummer:1058721
+Tx:;Stand: 25.09.2018; version1.0;DZR
+Tx:;TSK Standard EIN
+Tx:;
+Tx: INTEGER RES1, RES2, okcount, nokcount, key, error
+Tx: INTEGER yearint, counter, count, i, doy
+Tx: CHAR variant, doystr, dmc, dayyear
+Tx: CHAR date, time, year, month, day, hours, min, sec
+Tx: CHAR text, barcode, boschdate, boschcomplete
+Tx:;
+Tx: PRINTER IS TRMBIG
+Tx:;PRINTER IS TRMSTD
+Tx: KEYONERRON
+Tx:;
+Tx:;------------Belegung DI --------------
+Tx:; DIN(1)                        ;
+Tx:; DIN(2)                        ;
+Tx:; DIN(3)        ;Start Button(X6)
+Tx:; DIN(4)        ;Keyswitch (X6)
+Tx:; DIN(5)        ;
+Tx:; DIN(6)        ;
+Tx:; DIN(7)        ;Part in NIO Box
+Tx:; DIN(8)        ;Flap NIO Box close
+Tx:; DOUT (1,0)    ;Lock Modules X1A+X2(X9,X11)
+Tx:; DOUT (2,0)    ;Modul voltage
+Tx:; DOUT (3,0)    ;Modul plane
+Tx:; DOUT (4,0)    ;
+Tx:; DOUT (5,0)    ;
+Tx:; DOUT (6,0)    ;
+Tx:; DOUT (7,0)    ;
+Tx:; DOUT (8,0)    ;Open NIO Box
+Tx:;
+Tx:;-------------PROGRAM START-------------
+Tx:variant = ""
+Tx:WHILE (1)
+Tx:  GOSUB HOME
+Tx:  WHILE variant = ""
+Tx:      PRINT "<C>"
+Tx:      TABXY (1,1)
+Tx:      PRINT "*******    Program Selection    *******<R>"
+Tx:      PRINT "----------------------------------------"
+Tx:      TABXY (5,2)
+Tx:      PRINT "Button - 1 -  = 28557165"
+Tx:      TABXY (6,2)
+Tx:      PRINT "Button - 2 -  = 28559442"
+Tx:      TABXY (14,9)
+Tx:      PRINT "--- ESC = Cancel ---"
+Tx:      WHILE (1)
+Tx:          key = TASTE
+Tx:          IF key = 49
+Tx:             variant = "28557165"
+Tx:             BREAK
+Tx:          ENDIF
+Tx:          IF key = 50
+Tx:             variant = "28559442"
+Tx:             BREAK
+Tx:          ENDIF
+Tx:          IF key = 27
+Tx:             END
+Tx:          ENDIF
+Tx:      ENDWHILE
+Tx:  ENDWHILE
+Tx:;
+Tx:  DOUT (2,1)   ;Modulvoltage on
+Tx:  DOUT (1,1)   ;Lock Modules X1A+X2 on
+Tx:  PRINT "<C>---     Test:    " variant "      ---"
+Tx:  TABXY (4,12)
+Tx:  PRINT "  OK  = "okcount
+Tx:  TABXY (5,12)
+Tx:  PRINT " NOK  = "nokcount
+Tx:  TABXY (6,1)
+Tx:  PRINT "________________________________________"
+Tx:  TABXY (8,8)
+Tx:  PRINT "*** insert cable and ***"
+Tx:  TABXY (10,8)
+Tx:  PRINT "***    press start   ***"
+Tx:  TABXY (14,9)
+Tx:  PRINT "--- ESC = Cancel ---"
+Tx:  WAIT (500)
+Tx:;  WHILE DIN (3) = 0
+Tx:;      GOSUB CANCEL
+Tx:;  ENDWHILE
+Tx:  WAIT (800)
+Tx:  PRINTER IS TRMSTD
+Tx:  RES1 = PROG(variant,"WAIT_KEY")
+Tx:  DOUT (1,0)   ;Lock Modules X1A+X2 OFF
+Tx:  PRINTER IS TRMBIG
+Tx:     IF RES1 = 0
+Tx:        DOUT (3,0)
+Tx:        WAIT (300)
+Tx:        DOUT (2,0)
+Tx:        GOSUB OK
+Tx:     ELSE
+Tx:        GOSUB NOK
+Tx:     ENDIF
+Tx:;
+Tx:  DOUT (1,1)   ;Lock Modules X1A+X2 on
+Tx:  DOUT (3,0)
+Tx:  WAIT (300)
+Tx:  DOUT (2,0)
+Tx:  WAIT (800)
+Tx:  PRINT "<C>"
+Tx:  TABXY (1,3)
+Tx:  PRINT "----- Leave Program loop ? -----<R>"
+Tx:  PRINT "----------------------------------------"
+Tx:  TABXY (14,9)
+Tx:  PRINT "--- ESC = Cancel ---"
+Tx:  TABXY (10,3)
+Tx:  FOR i = 1 TO 20
+Tx:     IF KBHIT = 27
+Tx:        variant = ""
+Tx:        BREAK
+Tx:     ENDIF
+Tx:  NEXT
+Tx:  LED ("ALL","OFF")
+Tx:ENDWHILE
+Tx:;
+Tx:;-------------Sub Programs-------------
+Tx:;
+Tx: SUB HOME
+Tx:   DOUT (8,0)    ;Reset open NIO Box
+Tx:   WHILE DIN (4) <> 0
+Tx:      GOSUB CANCEL
+Tx:      PRINT "<C>"
+Tx:      TABXY (1,3)
+Tx:      PRINT "***** Keyswitch is active ! *****<R>"
+Tx:      PRINT "----------------------------------------"
+Tx:   ENDWHILE
+Tx:   WHILE DIN (7) <> 0
+Tx:      GOSUB CANCEL
+Tx:      PRINT "<C>"
+Tx:      TABXY (3,3)
+Tx:      PRINT "***** NIO BOX is fuel ! *****<R>"
+Tx:      PRINT "----------------------------------------"
+Tx:   ENDWHILE
+Tx:   WHILE DIN (8) = 0
+Tx:      GOSUB CANCEL
+Tx:      PRINT "<C>"
+Tx:      TABXY (3,3)
+Tx:      PRINT "***** NIO BOX is open ! *****<R>"
+Tx:      PRINT "----------------------------------------"
+Tx:   ENDWHILE
+Tx: ENDSUB
+Tx:;
+Tx: SUB BARCODE
+Tx:   counter = 0
+Tx:   WHILE (1)
+Tx:       counter = counter + 1
+Tx:       PRINT "<C>"
+Tx:       TABXY(3,10)
+Tx:       PRINT "Retry Counter: "counter
+Tx:       TABXY (1,3)
+Tx:       PRINT "---    Compare 2D Barcode   ---"
+Tx:       TABXY (5,1)
+Tx:;      PRINT "Barcode:"dmc
+Tx:       TABXY (6,1)
+Tx:       PRINT "________________________________________"
+Tx:       TABXY (8,1)
+Tx:       PRINT "Barcode:"
+Tx:       TABXY (8,9)
+Tx:       INPUT text
+Tx:       IF STRCOMP (dmc,text) <> 0
+Tx:          IF counter >=3
+Tx:             error = 1
+Tx:             BREAK
+Tx:          ENDIF
+Tx:       ELSE
+Tx:          okcount = okcount + 1
+Tx:          error = 0
+Tx:          BEEP ("OK")
+Tx:          LED("OK","ON")
+Tx:          BREAK
+Tx:       ENDIF
+Tx:   ENDWHILE
+Tx: ENDSUB
+Tx:;
+Tx: SUB OK
+Tx:    GOSUB DMCBUILD
+Tx:    PRINTER IS PRT
+Tx:    ETIK("DMC")
+Tx:    PRINTER IS TRMBIG
+Tx:    PRINTER IS TRM
+Tx:    GOSUB BARCODE
+Tx:    IF error = 1
+Tx:       GOSUB NOK
+Tx:    ENDIF
+Tx: ENDSUB
+Tx:;
+Tx: SUB NOK
+Tx:   nokcount = nokcount + 1
+Tx:   PRINT "<C>---     Test:    " variant "      ---"
+Tx:   TABXY (4,12)
+Tx:   PRINT "  OK  = "okcount
+Tx:   TABXY (5,12)
+Tx:   PRINT " NOK  = "nokcount
+Tx:   TABXY (6,1)
+Tx:   PRINT "________________________________________"
+Tx:   BEEP ("PC",2500,300)
+Tx:   TABXY (8,5)
+Tx:   PRINT"*** Not pass Harness Test ***"
+Tx:   TABXY (9,9)
+Tx:   PRINT"* or compare Barcode *"
+Tx:   TABXY (10,6)
+Tx:   PRINT"*** drop cable in red Box ***"
+Tx:   DOUT (8,1)   ;Open NIO Box
+Tx:   TABXY (13,5)
+Tx:   PRINT"--- Wait for Keyswitch ---"
+Tx:   BEEP ("PC",2500,300)
+Tx:   WHILE DIN (4) = 0
+Tx:   ENDWHILE
+Tx:   DOUT (1,1)	   ;Lock Modules X1A+X2 on
+Tx:   DOUT (2,0)           ;Modul voltage off
+Tx:   TABXY (8,6)
+Tx:   PRINT"*** Harness Test not pass  ***"
+Tx:   TABXY (9,6)
+Tx:   PRINT"***                        ***"
+Tx:   TABXY (10,6)
+Tx:   PRINT"*** drop cable in red Box ***"
+Tx:   TABXY (13,3)
+Tx:   PRINT"--- Wait for harness in NIO Box ---"
+Tx:   DOUT (8,0)   ;Reset open NIO Box
+Tx:   WHILE DIN (7) = 0
+Tx:   ENDWHILE
+Tx:   BEEP ("OK")
+Tx: ENDSUB
+Tx:;
+Tx: SUB CANCEL
+Tx:   IF KBHIT = 27
+Tx:          END
+Tx:   ENDIF
+Tx: ENDSUB
+Tx:;
+Tx:SUB DMCBUILD
+Tx:    GETVAR(14, date)    ;24.01.2017
+Tx:    GETVAR(16, time)    ;12:33:22
+Tx:    MID (year,date,7,4)
+Tx:    MID (month,date,4,2)
+Tx:    MID (day,date,1,2)
+Tx:    MID (hours,time,1,2)
+Tx:    MID (min,time,4,2)
+Tx:    MID (sec,time,7,2)
+Tx:   dmc =  variant + year + month + day + hours + min + sec
+Tx:   PRINT dmc
+Tx:   TASTE
+Tx:   SETVAR (110, dmc)
+Tx:ENDSUB
+
+@
